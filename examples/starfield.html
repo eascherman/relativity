@@ -44,7 +44,7 @@
         re(s, 'depthScale', () => s.z / depth);
         re(s, 'diameter', () => 4 * s.depthScale);
         
-        var interval = 10;
+        var interval = 100;
         var dt = interval / 1000;
         var dragFactor = drag * dt;
         window.setInterval(function() {
