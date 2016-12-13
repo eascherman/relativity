@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Star Field</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="relativity.js"></script>
+    <script src="templateengine.1.js"></script>
+
+    <script>
+
+        function isString(myVar) {
+            return (typeof myVar === 'string' || myVar instanceof String);
+        }
+        
+        function listen(name, callback) {       // helper to establish callbacks for events on an element
+            return function (ele) {
+                if (!ele.evCallbacks)
+                    ele.evCallbacks = {};
+                if (!ele.evCallbacks[name])
+                    ele.addEventListener(name, function(ev) {
+                        ele.evCallbacks[name](ev);
+                    });
+                ele.evCallbacks[name] = callback;
+            }
+        }
+        
+        function input(func) {
+            return listen('input', ev => func(ev.target.value, ev));
+        }
+        
+        function bind2(obj, prop) {
+            return function(ele) {  
+                ele.value = obj[prop];
+                return input(val => obj[prop] = val);
+            }
+            return [        // todo: fix attribute handling bugs so this works
+                el => el.value = obj[prop],
+                input(val => obj[prop] = val)
+            ];
+        }
+    </script>
+
+</head>
+
+<body>
+
+    <div id="moreStuff"></div>
+
+    <script>
+        
+        function randomColor() {
+            var r = Math.floor(256 * Math.random());
+            var g = Math.floor(256 * Math.random());
+            var b = Math.floor(256 * Math.random());
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+        
+        function clones(func, count) {
+            var out = [];
+            for (var i=0 ; i<count ; i++)
+                out.push(func());
+            return out;
+        }
+        
+        var width = 1000;
+        var height = 1000;
+        var depth = 600;
+        var acc = 1;
+        var drag = 0.05;
+        
+        var starFactory = () => el => {
+            var s = {
+                x: Math.random() * width,
+                y: Math.random() * height,
+                z: Math.random() * depth,
+                vx: 0, vy: 0, vz: 0
+            };
+            R(s, 'x');
+            R(s, 'y');
+            R(s, 'x');
+            R(s, 'depthScale', () => s.z / depth);
+            R(s, 'diameter', () => 4 * s.depthScale);
+            
+            (function wiggle() {
+                window.setTimeout(function() {
+                    s.x = (width + s.x) % width + s.vx;
+                    s.y = (height + s.y) % height + s.vy;
+                    s.z += s.vz;
+                    s.vx = s.vx * (1-drag) + Math.random() * acc - acc / 2;
+                    s.vy = s.vy * (1-drag) + Math.random() * acc - acc / 2;
+                    s.vz = s.vz * (1-drag) + Math.random() * acc - acc / 2;
+                    if (s.vz > depth) 
+                        s.vz = Math.abs(s.vz) * -1;
+                    if (s.vz < 0) 
+                        s.vz = Math.abs(s.vz);
+                    
+                    wiggle();
+                }, 100);
+            })();
+            
+            function posUpdate(el) {
+                el.style.left = s.x + 'px';
+                el.style.top = s.y + 'px';
+                el.style.borderRadius = s.diameter / 2 + 'px';
+                el.style.width = s.diameter + 'px';
+                el.style.height = s.diameter + 'px';
+            }
+            
+            return bundle
+                //`<div ${posUpdate} style="position:absolute; border:1px solid orange; background-color: white;"> </div>`;
+                `<div style="position:absolute; border:1px solid orange; border-radius:${() => s.diameter/2}px; top:${() => s.y}px; left:${() => s.x}px; width:${() => s.diameter}px; height: ${() => s.diameter}px; background-color: white;"> </div>`;
+        };
+        
+        var stars = clones(starFactory, 200);
+        
+        var starField = bundle 
+            `<div style="background-color:black; height: ${height}px; width: ${width}px;">${stars}</div>`;
+        
+        
+        
+        
+        install(starField, 'moreStuff');
+
+    </script>
+</body>
+
+</html>

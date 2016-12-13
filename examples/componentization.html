@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Event Handling</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+
+    <style>
+        a { cursor: pointer; }
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+
+    var data = {};
+    re(data, 'name');
+    data.name = 'World';
+        
+    // an event handling helper
+    //      ${ el => el.addEventListener('click', ev => doStuff()) }
+    //      becomes
+    //      ${ on('click', ev => doStuff()) }
+    var on = (name, callback) => el => el.addEventListener(name, callback);
+        
+    // an input binding helper to simpify binding and deal with our moving cursor problem
+    var bind2 = (obj, prop) =>  [
+        el => {         // assign the value if changed elsewhere and the input is not focused
+            var val = obj[prop];        //  obtain the value regardless of scenario to ensure proper change detection
+            if (document.activeElement !== el)
+                el.value = val;
+        },
+        el => on('input', ev => obj[prop] = el.value),     // push input updates to the model
+        el => el.addEventListener('blur', ev => {                           // since we're not updating the input while focused, update on blur if necessary
+            if (el.value != obj[prop])
+                el.value = obj[prop];
+        })      
+    ];
+            
+    // note: the toolkit includes a similar text input, along with an input binding helper:
+    var textInput = (obj, param) => re.bundle
+        `<input ${bind2(obj, param)} />`;
+        
+    /*// our prior text input, for comparison:
+    var textInput = (obj, param) => re.bundle
+        `<input ${el => el.value = obj[param]} 
+            ${el => el.addEventListener('input', ev => obj[param] = el.value)} />`;
+    */
+        
+    var nameLink = name => re.bundle
+        `<div><a ${on('click', ev => data.name = name)}>
+            ${name}
+        </a></div>`;
+            
+    var names = ['Joe', 'Sam', 'Jill', 'Billy', 'Lauren'];
+            
+    var content = re.bundle
+        `<h3>Hello, ${() => data.name}!</h3>
+        ${textInput(data, 'name')}
+        ${names.map(nameLink)}
+        <p>Change the input or click a name to see the greeting change</p>`;
+    
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Event Handling</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+    <script src="../toolkit.js"></script>
+
+    <style>
+        a { cursor: pointer; }
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+
+    // two way binding established by a getter/formatter and a parser/setter
+    // sets the value whenever the model changes as long as the element does not have focus
+    // sets the value when the input loses focus
+    // sets the model on input
+    var bind2 = (getFormat, parseSet) => [
+        getFormat ? el => document.activeElement === el ? 0 : el.value = getFormat() : null,
+        getFormat ? re.on.blur(ev => ev.target.value = getFormat()) : null,
+        parseSet ? re.on.input(ev => parseSet(ev.target.value)) : null
+    ];
+    
+    // first arg is a function to retrieve the value and format it for the user
+    // second arg parses the user input into a value and sets it if valid
+    //    or throws an error if not
+    var validatingGenericInput = (getFormat, parseValidateSet, attrs) => {
+        function setter(val) {
+            try {
+                parseValidateSet(val);
+            } catch (err) {
+                out.issues = err;
+            }
+        }
+        
+        var out = re.bundle
+            `<input ${attrs} ${bind2(getFormat, setter)} />
+            ${() => out.issues}`;
+        re(out, 'issues');      // attaching the issues to the bundle so they're available externally
+        
+        return out;
+    };
+    
+    var numberInput = (getFormat, parseValidateSet) => 
+        validatingGenericInput(getFormat, function(val) {
+            if (isNaN(val))
+                throw 'Please enter a valid number';
+            parseValidateSet(val);
+        });
+        
+    var dateInput = (getFormat, parseValidateSet) => 
+        validatingGenericInput(getFormat, function(val) {
+            var d = new Date(val);
+            if (isNaN(d))
+                throw 'Please enter a valid date';
+            parseValidateSet(d);
+        });
+    
+    var hasIssuesStyle = issues => issues ? 'border-color: red; background-color: rgba(255, 200, 200, 0.5);' : '';
+
+    
+    var checkInput = (get, set, label) => re.bundle 
+        `<label>
+            <input type="checkbox"  ${el => el.checked = get()} 
+                ${re.on.click(ev => set(ev.target.checked))} />
+            ${label}
+         </label>`;
+    
+    var radioGroup = (get, set) => {
+        var counter = radioGroup.counter++;
+        return (obj) => re.bundle
+            `<label>
+                <input type="radio" name="radioGroup${counter}" 
+                    ${el => el.checked = obj.value === get()} 
+                    ${re.on.click(ev => ev.target.checked ? set(obj.value) : 0)} />
+                ${obj.label}
+            </label>`;
+    };
+    radioGroup.counter = 0;
+    
+    var data = {
+        text: 'some stuff',
+        num: 77,
+        date: new Date(),
+        check: false,
+        radio: 2
+    };
+    re(data, 'text');
+    re(data, 'num');
+    re(data, 'date');
+    re(data, 'check');
+    re(data, 'radio');
+    
+    var radioOptions = [
+        {value: 1, label: 'one'},
+        {value: 2, label: 'two'},
+        {value: 3, label: 'three'},
+        {value: 4, label: 'four'}
+    ];
+    
+    var content = re.bundle
+        `<h3>Text</h3>
+        <div>${() => data.text}</div>
+        ${textInput(() => data.text, val => data.text = val)}
+                
+        <h3>Validated Number</h3>
+        <div>${() => data.num}</div>
+        ${numberInput(() => data.num, val => data.num = val)}
+        
+        <h3>Validated Date</h3>
+        <div>${() => data.date && data.date.toLocaleDateString()}</div>
+        ${dateInput(() => data.date && data.date.toLocaleDateString(), val => data.date = val)}
+        
+        <h3>Checkbox</h3>
+        ${checkInput(() => data.check, val => data.check = val, () => data.check ? "Hey I'm checked!" : "I'm blank...")}
+        
+        <h3>Radio Buttons</h3>
+        <div>${() => data.radio}</div>
+        ${radioOptions.map(radioGroup(() => data.radio, val => data.radio = val))}
+        
+        <p>Change the input or click a name to see the greeting change</p>`;
+    
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

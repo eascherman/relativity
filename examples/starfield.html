@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Star Field</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+
+    <script>
+    </script>
+
+</head>
+
+<body></body>
+
+<script id="example">
+    
+    function clones(func, count) {
+        var out = [];
+        for (var i=0 ; i<count ; i++)
+            out.push(func());
+        return out;
+    }
+    
+    var width = 600;
+    var height = 600;
+    var depth = 600;
+    var acc = 10;
+    var drag = 0.1;
+    
+    var starFactory = () => el => {
+        var s = {
+            x: Math.random() * width,
+            y: Math.random() * height,
+            z: Math.random() * depth,
+            vx: 0, vy: 0, vz: 0
+        };
+        re(s, 'x');
+        re(s, 'y');
+        re(s, 'x');
+        re(s, 'depthScale', () => s.z / depth);
+        re(s, 'diameter', () => 4 * s.depthScale);
+        
+        var interval = 500;
+        var dt = interval / 1000;
+        var dragFactor = drag * dt;
+        window.setInterval(function() {
+            s.x = (width + s.x) % width + s.vx * dt;
+            s.y = (height + s.y) % height + s.vy * dt;
+            s.z += s.vz * dt;
+            s.vx = s.vx * (1-dragFactor) + dt * acc * (Math.random() - 0.5);
+            s.vy = s.vy * (1-dragFactor) + dt * acc * (Math.random() - 0.5);
+            s.vz = s.vz * (1-dragFactor) + dt * acc * (Math.random() - 0.5);
+            if (s.vz > depth) 
+                s.vz = Math.abs(s.vz) * -1;
+            if (s.vz < 0) 
+                s.vz = Math.abs(s.vz);
+        }, interval);
+    
+        function posUpdate(el) {
+            el.style.left = s.x + 'px';
+            el.style.top = s.y + 'px';
+            el.style.borderRadius = s.diameter / 2 + 'px';
+            el.style.width = s.diameter + 'px';
+            el.style.height = s.diameter + 'px';
+        }
+        
+        return re.bundle
+            `<div style="position:absolute; border:1px solid orange; background-color: white;" ${posUpdate}> </div>`;
+    };
+    
+    var stars = clones(starFactory, 200);
+    
+    var starField = re.bundle 
+        `<div style="background-color:black; height: ${height}px; width: ${width}px;">${stars}</div>`;
+    
+    
+    
+    
+    re.install(starField, document.body);
+
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

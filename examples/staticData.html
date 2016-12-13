@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Static Data</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+
+    <style>
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+    var data = { name: 'World' };
+    
+    var content = re.bundle
+        `<h3>Hello, ${data.name}!</h3>`;
+        
+    // markup is declared with the re.bundle funtion followed by a template literal
+    // note: simple strings are rendered as text nodes, even if they look like html
+    
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

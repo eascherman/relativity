@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Markup</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+
+    <style>
+    </style>
+
+</head>
+
+<body>
+
+    <div id="example"></div>
+
+    <script>
+        
+        var content = bundle
+            `<h3>Hello, World!</h3>`;
+        
+        install(content, 'example');
+        
+    </script>
+</body>
+
+</html>

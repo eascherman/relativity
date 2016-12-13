@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Dynamic Data</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+
+    <style>
+        td.fill {
+            background-color: blue;
+        }
+        td {
+            width: 15px;
+            height: 15px;
+        }
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+
+    var data = {};
+    re(data, 'name');       // setup data.name to notify its dependents of changes
+    data.name = 'World';
+    
+    // when a value a function in the content depends on changes, the function will be re-evaluated        
+    // so to make a value dynamic we pass a function instead of the value itself
+    var content = re.bundle
+        `<h3>Hello, ${() => data.name}!</h3>`;  
+    
+    re.install(content, document.body);
+    
+    // change the name each second 
+    var names = ['Robin', 'Jack', 'Sam', 'Josie', 'James', 'Rex'];
+    var i = 0;
+    setInterval(function nextName() {
+        i = (i + 1) % names.length;
+        data.name = names[i];
+    }, 1000);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

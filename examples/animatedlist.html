@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Arbitrary form</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+    <script src="../toolkit.js"></script>
+
+    <script>
+
+        function isString(myVar) {
+            return (typeof myVar === 'string' || myVar instanceof String);
+        }
+        
+    </script>
+
+    <style>
+        .tablink {
+            padding: 6px;
+        }
+        a.tablink {
+            cursor: pointer;
+        }
+        .tablink:not(.active) {
+            border-bottom: 2px solid gray;
+        }
+       .tablink.active {
+            border-top: 2px solid gray;
+            border-left: 2px solid gray;
+            border-right: 2px solid gray;
+        }
+        
+        @keyframes inleft {
+            from {
+                margin-left: -100%;
+                height: 1px;
+            }
+
+            to {
+                margin-left: 0%;
+                height: 37px;
+            }
+        }
+        .entering {
+            animation-name: inleft;
+        }
+        @keyframes outleft {
+            from {
+                margin-left: 0%;
+                height: 37px;
+            }
+
+            to {
+                margin-left: -100%;
+                height: 1px;
+            }
+        }
+        .exiting {
+            animation-name: outleft;
+        }
+        .llitem {
+            animation-duration: 0.5s;
+            height: auto;
+            display: block;
+        }
+        .lli > a {
+            color: white;
+            font-weight: bold;
+            font-size: large;
+            padding-left: 6px;
+            padding-right: 6px;
+            cursor: pointer;
+            padding: 4px;
+            font-family: arial;
+            text-shadow: 0 0 4px black;
+        }
+        .lli {
+            padding: 8px;
+            display: inline-block;
+        }
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+    
+    function randomColor(max, min) {
+        if (min === undefined)
+            min = 0;
+        if (max === undefined)
+            max = 255;
+        var range = max - min;
+        var r = Math.round(Math.random() * range) + min;
+        var g = Math.round(Math.random() * range) + min;
+        var b = Math.round(Math.random() * range) + min;
+        
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+    var randomPastel = () => randomColor(240, 160);
+    
+        
+    // display a linked list according to a formatter, and update its changes
+    // note: the linked list is part of the toolkit
+    var llDisplay = (ll, formatter) => {
+        var itemTemplate = lli => {
+            var out = re.bundle
+                `<span class="llitem ${() => out.styleClass}">
+                    ${formatter ? formatter(lli) : () => lli.value}
+                </span>`;
+            re(out, 'styleClass');      // we will use this to control animations
+            return out;
+        };
+        function maintainer(el) {
+            if (!el.initialized) {      // dont want this happenging multiple times
+                el.initialized = true;  
+                // add initial items
+                ll.toArray().forEach(lli => {
+                    lli.content = itemTemplate(lli);
+                    lli.installation = install(lli.content, el)
+                }); 
+                // add any items inserted later into their correct positions
+                ll.onInsert(lli => {
+                    lli.content = itemTemplate(lli);
+                    lli.content.styleClass = 'entering';                        // begin enter animation
+                    lli.installation = install(lli.content, el, lli.itemAfter ? lli.itemAfter.installation.getFirstElement() : undefined)
+                });
+                // remove any items that are taken out
+                ll.onRemove(lli => {
+                    lli.content.styleClass = 'exiting';                         // begin exit animation
+                    window.setTimeout(() => lli.installation.remove(), 450);    // remove item after animation has had a chance to play
+                });
+            }
+        }
+        
+        return re.bundle
+            `<div ${maintainer} />`;
+    }; 
+    
+    
+    // create starting data
+    var ll = new LinkedList(['red', 'black', 'green']);
+    
+    // create a formatter to control how individual items render
+    var lliValDisplay = lli => re.bundle
+        `<span class="lli" style="background-color: ${() => lli.value};">
+            ${textInput(lli, 'value')} 
+            <a ${listen('click', ev => lli.insert(randomPastel()))}>+</a>
+            <a ${listen('click', ev => lli.remove())}>x</a>
+        </span>`;
+    
+    var content = re.bundle
+        `${llDisplay(ll, lliValDisplay)}
+        <p>Try changing the colors and adding/removing items with the + and x buttons</p>`;
+    
+    re.install(content, document.body);
+    
+    // add several more items over time
+    setTimeout(() => ll.append(randomPastel()), 500);
+    setTimeout(() => ll.append(randomPastel()), 1000);
+    setTimeout(() => ll.append(randomPastel()), 1500);
+    setTimeout(() => ll.append(randomPastel()), 2000);
+    setTimeout(() => ll.append(randomPastel()), 2500);
+    setTimeout(() => ll.append(randomPastel()), 3000);
+    setTimeout(() => ll.append('not a color'), 3500);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Examples</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="changedetection.js"></script>
+    <script src="templateengine.js"></script>
+    <script src="toolkit.js"></script>
+
+    <script>
+
+        function isString(myVar) {
+            return (typeof myVar === 'string' || myVar instanceof String);
+        }
+        
+    </script>
+
+    <style>
+        html {
+            background-color: silver;
+            font-family: 'arial';
+        }
+        .main {
+            white-space: nowrap;
+            width: 100%;
+            display: table;
+        }
+        .main > div { 
+            display: table-cell; 
+        }
+        
+        .active {
+            background-color: white;
+            color: black;
+        }
+        
+        .active, .inactive {
+            padding: 5px;
+            padding-left: 8px;
+            padding-right: 16px;
+            margin-right: -5px;
+        }
+  
+        a { cursor: pointer; }
+        
+        body, html { 
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+
+</head>
+
+<body></body>
+
+    <script>
+
+        var examples = {};
+        
+        examples['Hello, World!'] = 'helloworld';
+        examples['Static data'] = 'staticData';
+        examples['Dynamic data'] = 'dynamicData';
+        examples['Event Handling'] = 'eventHandling';
+        examples['Componentization'] = 'componentization';
+        examples['Itteration'] = 'itteration';
+        examples['Responsive Tabs'] = 'responsivetabs';
+        examples['Tic Tac Toe'] = 'tictactoe';
+        examples['Stacks of Blocks'] = 'blocks';
+        examples['Add-Remove List'] = 'animatedlist';
+        examples['Drag and Drop'] = 'draganddrop';
+        examples['Stars'] = 'starfield';
+        
+        var mapObj = (obj, func) =>
+            Object.keys(obj).map(key => func(obj[key], key));
+
+        // create a simple router
+        var router = {};
+        re(router, 'path', function get() {
+            return window.location.href.split('#')[1];
+        }, function set(value) {
+            window.location.href = window.location.href.split('#')[0] + '#' + value;
+        });
+        
+        // initialize to first example if no router path 
+        var p = router.path;
+        if (!p || p.length==0)
+            router.path = examples[Object.keys(examples)[0]];
+                
+        function activateExample(ex) {
+            return re.on.click(function(ev) { 
+                router.path = ex;
+            });
+        }
+        
+        var content = () => bundle
+            `<div class="main" style="height:100%;">
+                <div style="vertical-align: top; width: 200px;">
+                    ${mapObj(examples, (ex, key) => bundle
+                        `<div class="${() => 
+                                router.path === ex ? 'active' : 'inactive'}">
+                            <a ${activateExample(ex)}>
+                                ${key}
+                            </a>
+                        </div>`
+                    )}
+                </div>
+                
+                <div style="position:relative;">
+                    <div style="top:0; left:0; right:0; bottom:0; position: absolute;">
+                        <iframe src="examples/${() => router.path}.html" 
+                            style="background-color: white; border:none; height:100%; width:100%; margin-bottom: -5px;"></iframe>
+                    </div> 
+                </div>
+            </div>`;
+        
+        re.install(content, document.body);
+
+    </script>
+
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Responsive Content</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+    <script src="../toolkit.js"></script>
+
+    <style>
+        .tabHeader {
+            display: inline-block;
+            margin: 3px;
+            background-color: yellow;
+            padding: 6px;
+            cursor: pointer;
+        }
+        .tabContent {
+            background-color: rgb(230,230,230);
+            padding: 10px;
+        }
+        .tabContent, .tabStrip {
+            width: 240px;
+            white-space: normal;
+        }
+        .active {
+            background-color: orange;
+        }
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+    
+    // returns a throttled version of whatever function is passed in
+    function throttle(func, minInterval) {
+        var timeout;
+        return function() {
+            if (!timeout) {
+                var args = arguments;
+                var thiz = this;
+                timeout = setTimeout(function() {
+                    timeout = null;
+                    func.apply(thiz, args);
+                }, minInterval);
+            }
+        };
+    }
+    
+    // setup the data.windowWidth to match the width and trigger updates
+    var data = {};
+    re(data, 'windowWidth');
+    data.windowWidth = window.innerWidth;
+    window.addEventListener('resize', throttle(ev => data.windowWidth = window.innerWidth, 500));    
+    
+    // create some tab definitions
+    var tabDefinitions = [
+        {
+            title: 'These',
+            content: re.bundle `<h2>These</h2>`
+        }, {
+            title: 'Are',
+            content: re.bundle `<h2>Are</h2>`
+        }, {
+            title: 'Some',
+            content: re.bundle `<h2>Some</h2>`
+        }, {
+            title: 'Responsive',
+            content: re.bundle `<h2>Responsive</h2>`
+        }, {
+            title: 'Tabs',
+            content: re.bundle `<h2>Tabs</h2>`
+        }
+    ];
+    
+    // create a basic tabset component
+    function tabSet(defs) {
+        var state = {};
+        re(state, 'activeTab');
+        state.activeTab = defs[0];
+        
+        return re.bundle
+            `<div style="display: inline-block; margin: 4px;">
+                <div class="tabStrip">
+                    ${defs.map(def => re.bundle
+                        `<div class="tabHeader ${() => state.activeTab === def ? 'active' : 'inactive'}" 
+                                ${re.on.click(ev => state.activeTab = def)}>
+                            ${def.title}
+                        </div>`
+                    )}
+                </div>
+                <div class="tabContent">${() => state.activeTab.content}</div>
+            </div>`; 
+    }
+    
+    // splits tabs into groups based on window width
+    function splitTabs(defs) {
+        var stacks = Math.floor((data.windowWidth - 30) / 265);
+        var out = [];
+        for (var i=0; i<defs.length ; i++) {
+            var def = defs[i];
+            if (i < stacks)
+                out.push([def]);
+            else
+                out[out.length-1].push(def);
+        }
+        
+        return out;    
+    };
+    
+    // renders tabs in as many separate tabSets as available width allows
+    var responsiveTabs = defs => el => re.bundle
+        `<div style="white-space: nowrap;">
+            ${splitTabs(defs).map(tabSet)}
+        </div>`;
+    
+    
+    var content = re.bundle
+        `<h3 style="font-size:${() => data.windowWidth / 6}%">Responsive Content</h3>
+        <p>Current window width: ${() => data.windowWidth}</p>
+        ${responsiveTabs(tabDefinitions)}
+        <p>Try resizing the window to see how things change</p>`;
+        
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

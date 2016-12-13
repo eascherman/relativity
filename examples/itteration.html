@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Event Handling</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+    <script src="../toolkit.js"></script>
+
+    <style>
+        a { 
+            cursor: pointer;
+            display: inline-block;
+            background-color: silver;
+            padding: 6px; 
+        }
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+
+    // create some test data
+    function Person(name, age) {
+        re(this, 'name');
+        re(this, 'age');
+        this.name = name;
+        this.age = age;
+    }
+
+    var data = {};
+    re(data, 'people');     // if the data.people array changes we want change notifications to trigger
+    data.people = [
+        new Person('Jane', 44),
+        new Person('Robin', 13),
+        new Person('Sam', 20),
+        new Person('Josie', 87)
+    ];
+    
+    var getAverageAge = () => data.people.reduce((accum, person) => accum + person.age, 0) / data.people.length;
+    
+    var content = re.bundle
+        `<h3>People</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+            </tr>
+            ${() => data.people.map(person => re.bundle
+                `<tr>
+                    <td>${textInput(person, 'name')}</td>
+                    <td>${numberInput(person, 'age')}</td>
+                </tr>`
+            )}
+            <tr>
+                <td>Average Age:</td>
+                <td>${getAverageAge}</td>
+            </tr>
+        </table>
+        <br />
+        <a ${re.on('click', ev => data.people = data.people.concat([new Person('new person', 0)]))}>+ add person</a>`;
+    
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

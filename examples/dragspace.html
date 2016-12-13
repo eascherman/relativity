@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Drag Space</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+    <script src="../toolkit.js"></script>
+
+    <style>
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+    var height = 600;
+    var width = 600;
+    
+    var items = [];
+    for (var i=0 ; i<10 ; i++) {
+        var item = {
+            x: Math.random() * width,
+            y: Math.random() * height,
+            rot: (Math.random() - 0.5) * 15,
+            title: 'Title',
+            details: 'This is some content stuff'
+        };
+        re(item, 'x');
+        re(item, 'y');
+        items.push(item);
+    }
+    
+    var draggedItem;
+    var onDrag = item => re.on.drag(ev => {
+        if (draggedItem !== item) {
+            item.begin = null;
+            draggedItem = item;
+        }
+        if (item.begin) {
+            item.x += ev.x - item.begin.x;
+            item.y += ev.y - item.begin.y;
+        }
+        item.begin = {
+            x: ev.x, 
+            y: ev.y
+        };
+    });
+    
+    var onDrop = re.on.drop(ev => {
+        /*ev.preventDefault();
+        draggedItem.x += ev.clientX - draggedItem.begin.x;
+        draggedItem.y += ev.clientY - draggedItem.begin.y;
+        draggedItem = null;*/
+    });
+    
+    var onDragOver = re.on.dragover(ev => {
+        ev.preventDefault();
+    });
+    
+    var content = re.bundle
+        `<div style="height: ${height}px; width: ${width}px; position: relative;" 
+                ${onDragOver}>
+            ${items.map(item => re.bundle
+                `<div style="display: inline-block; position: absolute;
+                            background-color: green; padding: 8px;
+                            left: ${() => item.x}px; top: ${() => item.y}px;"
+                        draggable="true" ${onDrag(item)}>
+                    ${() => item.title}
+                    <p>${() => item.details}</p>
+                </div>`
+            )}
+        </div>`;
+                            //transform: rotate(${() => item.rot}deg);
+    
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

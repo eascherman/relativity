@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Hello World</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+    <script src="../toolkit.js"></script>
+
+    <style>
+        a { cursor: pointer; }
+        
+        .tictactoe > tr > td {
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+
+    // game board
+    function Spot() {
+        re(this, 'value');
+    }
+    Spot.prototype.click = function() {
+        if (!this.value && !game.getWinner && !game.isTie) {
+            if (game.xTurn)
+                this.value = 'X';
+            else
+                this.value = 'O';
+            game.xTurn = !game.xTurn;
+        }
+    };
+    var grid = [
+        [new Spot(), new Spot(), new Spot()],
+        [new Spot(), new Spot(), new Spot()],
+        [new Spot(), new Spot(), new Spot()]
+    ];
+    
+    // game variables
+    var game = {};
+    re(game, 'xTurn');
+    game.reset = function() {
+        game.xTurn = true;
+        for (var i=0 ; i<grid.length ; i++)
+            for (var j=0 ; j<grid[i].length ; j++)
+                grid[i][j].value = undefined;
+    };
+    game.reset();
+    
+    re(game, 'getWinner', function() {
+        function isWin(s1, s2, s3) {
+            var v1 = s1.value;
+            var v2 = s2.value;
+            var v3 = s3.value;
+            if (v1 && v1 === v2 && v2 === v3)
+                return v1;
+        }
+        
+        return isWin(grid[0][0], grid[1][1], grid[2][2]) ||     // diagonals 
+            isWin(grid[0][2], grid[1][1], grid[2][0]) ||
+            
+            isWin(grid[0][0], grid[0][1], grid[0][2]) ||        // rows
+            isWin(grid[1][0], grid[1][1], grid[1][2]) ||
+            isWin(grid[2][0], grid[2][1], grid[2][2]) ||
+            
+            isWin(grid[0][0], grid[1][0], grid[2][0]) ||        // columns
+            isWin(grid[0][1], grid[1][1], grid[2][1]) ||
+            isWin(grid[0][2], grid[1][2], grid[2][2]);
+    });
+    
+    re(game, 'isTie', function() {
+        return grid[0][0].value && grid[0][1].value && grid[0][2].value &&
+            grid[1][0].value && grid[1][1].value && grid[1][2].value &&
+            grid[2][0].value && grid[2][1].value && grid[2][2].value;
+    });
+    
+    re(game, 'gameState', function() {
+        var winner = game.getWinner;
+        if (winner)
+            return winner + ' Wins!';
+        else if (game.isTie)
+            return 'Tie!';
+        else if (game.xTurn)
+            return "X's Turn";
+        else
+            return "O's Turn";
+    });
+
+    var content = re.bundle
+        `<h3>${() => game.gameState}</h3>
+        <table class="tictactoe">
+            ${grid.map(row => re.bundle
+                `<tr>
+                    ${row.map(spot => re.bundle
+                        `<td style="padding: 5px; font-size: x-large: font-weight: bold; border: 1px solid gray;"
+                                ${re.on.click(ev => spot.click())}>
+                            ${() => spot.value} 
+                        </td>`
+                    )}
+                </tr>`
+            )}
+        </table>
+        <p><a ${re.on.click(game.reset)}>reset</a></p>`;
+
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

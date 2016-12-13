@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Event Handling</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+
+    <style>
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+
+    var data = {};
+    re(data, 'name');
+    data.name = 'World';
+    
+    // functions added inside an opening tag as below do not render 
+    // note: all html elements need to be self-closed or have a closing tag
+    // note: setting input values with   value="{() => data.name}"   does not correctly update if user has modified the input
+    // note: This is a rudimentary method of binding to the input. It has an issue with
+    //       moving the cursor to the end of the input on keystroke. It is also rather wordy.
+    //       We will refine this in the componentization example. 
+    
+    var content = re.bundle
+        `<h3>Hello, ${() => data.name}!</h3>
+        <input ${el => el.value = data.name} 
+            ${el => el.addEventListener('input', ev => data.name = el.value)} />
+        <p>Change the input to see the greeting change</p>`;
+    
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

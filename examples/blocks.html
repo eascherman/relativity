@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Blocks</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+
+    <style>
+        td.fill {
+            background-color: blue;
+        }
+        td {
+            width: 15px;
+            height: 15px;
+        }
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+
+    var data = {};
+    
+    re(data, 'stacks');
+    var rows = [0,1,2,3,4,5,6,7,8,9,10,11];
+    data.stacks = [];
+    
+    setInterval(function addStack() {
+        var empties = Math.random() * rows.length;
+        var stacks = [rows.map(i => i<empties ? 'empty' : 'fill')].concat(data.stacks);
+        if (stacks.length > 33)
+            stacks.pop();
+        data.stacks = stacks;
+    }, 200);
+            
+    // note: this is not an efficient way to do this
+    var content = re.bundle   
+        `<h3>Sacks of Blocks</h3>
+        <table>
+            ${rows.map(row => re.bundle
+                `<tr>
+                    ${() => data.stacks.map(stack => re.bundle
+                        `<td class="${stack[row]}"> </td>`
+                    )}
+                </tr>`
+            )}
+        </table>`;
+        
+    re.install(content, document.body);
+    
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

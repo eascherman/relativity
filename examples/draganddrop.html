@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Event Handling</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+    <script src="../toolkit.js"></script>
+    
+    <style>
+        a { cursor: pointer; }
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+
+    function randomColor(max, min) {
+        if (min === undefined)
+            min = 0;
+        if (max === undefined)
+            max = 255;
+        var range = max - min;
+        var r = Math.round(Math.random() * range) + min;
+        var g = Math.round(Math.random() * range) + min;
+        var b = Math.round(Math.random() * range) + min;
+        
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+    var randomPastel = () => randomColor(240, 160);
+
+    // a simplified version of our prior linked list display (no animations)
+    var llDisplay = (ll, formatter) => {
+        if (!formatter)
+            formatter = v => v.value;
+        
+        var maintainer = el => { 
+            if (!el.initialized) {
+                el.initialized = true;
+                ll.toArray().forEach(lli => lli.installation = re.install(formatter(lli), el));
+                ll.onInsert(lli => lli.installation = re.install(formatter(lli), el, lli.itemAfter ? lli.itemAfter.installation.getFirstElement() : undefined));
+                ll.onRemove(lli => lli.installation.remove());
+            }
+        };
+        
+        return re.bundle
+            `<div ${maintainer} />`
+    };
+    
+    var dndDisplay = (ll, formatter) => { 
+        if (!formatter)
+            formatter = lli => lli => lli.value;
+        
+        var draggedItem;
+        var lastDragOver;
+        
+        var dndFormatter = lli => bundle
+            `<div draggable="true" style="display: inline-block; margin: 5px; background-color: ${randomPastel()}; padding: 6px; cursor: move;"
+                    ${re.on.dragstart(ev => draggedItem = lli)}
+                    ${re.on.drop(ev => {
+                        ev.preventDefault();
+                        draggedItem = null;
+                        lastDragOver = null;
+                    })}
+                    ${re.on.dragover(ev => {
+                        ev.preventDefault();
+                        if (draggedItem !== lli && lastDragOver !== lli) {
+                            draggedItem.remove();
+                            draggedItem = lli.insert(draggedItem.value);
+                            lastDragOver = lli;
+                        }
+                    })}>
+                ${formatter(lli)}
+            </div>`;
+        
+        return bundle
+            `${llDisplay(ll, dndFormatter)}
+            <hr />
+            <div style="border: 4px dashed gray; display: inline-block; padding: 8px;"
+                    ${re.on.drop(ev => {
+                        ev.preventDefault();
+                        draggedItem.remove();
+                    })}
+                    ${re.on.dragover(ev => ev.preventDefault())}>
+                trashcan
+            </div>`;
+    };
+            
+    var sentence = 'This is a sentence that has been broken up into words for people to drag around!';
+    var ll = new LinkedList(sentence.split(' '));
+    var itemFormat = lli => bundle
+        `<div>${lli.value}</div>`;
+            
+    var content = re.bundle
+        `<h3>Drag and Drop</h3>
+        <div style="width: 250px;">
+            ${dndDisplay(ll, itemFormat)}   
+            <a style="display: inline-block; padding: 12px; background-color: gray; color: white; margin-left: 6px;"
+                    ${re.on('click', ev => ll.append(Math.random()))}>
+                + add random</a>
+        </div>
+        <p>Try dragging words around or dropping them in the trashcan.  You can also add a random number to the list.</p>`;
+    
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>
