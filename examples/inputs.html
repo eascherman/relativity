@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>Event Handling</title>
+	<title>Inputs</title>
     
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
 
@@ -12,6 +12,37 @@
 
     <style>
         a { cursor: pointer; }
+        
+        td { padding: 8px; }
+        
+        .labelWrap > input, .labelWrap > select {
+            border: none;
+            border-bottom: 1px solid black;
+            padding: 6px;
+            padding-bottom: 3px;
+            outline: none;
+            background: none;
+            min-width: 130px;
+            font-size: 100%;
+        }
+        .labelWrap > input:hover, .labelWrap > select:hover  {
+            background-color: rgba(220,220,220,0.5);
+            background: linear-gradient(rgba(255,255,255,0), rgba(220,220,220,0.5))
+        }
+        .labelWrap {
+            padding: 6px;
+        }
+        .labelWrap > .labelText {
+            color: gray; 
+            font-size: small; 
+            padding-left: 15px; 
+            margin-bottom: -2px;
+        }
+        
+        .inputError {
+            color: red;
+            font-size: small;
+        }
     </style>
 
 </head>
@@ -24,11 +55,13 @@
     // sets the value whenever the model changes as long as the element does not have focus
     // sets the value when the input loses focus
     // sets the model on input
-    var bind2 = (getFormat, parseSet) => [
-        getFormat ? el => document.activeElement === el ? 0 : el.value = getFormat() : null,
-        getFormat ? re.on.blur(ev => ev.target.value = getFormat()) : null,
-        parseSet ? re.on.input(ev => parseSet(ev.target.value)) : null
-    ];
+    var bind2 = (getFormat, parseSet) => {
+        return [
+            getFormat ? el => document.activeElement === el ? 0 : el.value = getFormat() : null,
+            getFormat ? re.on.blur(ev => ev.target.value = getFormat()) : null,
+            parseSet ? re.on.input(ev => parseSet(ev.target.value)) : null
+        ]
+    };
     
     // first arg is a function to retrieve the value and format it for the user
     // second arg parses the user input into a value and sets it if valid
@@ -37,14 +70,20 @@
         function setter(val) {
             try {
                 parseValidateSet(val);
+                out.issues = null;
             } catch (err) {
                 out.issues = err;
             }
         }
         
+        function getter() {
+            out.issues = null;
+            return getFormat();
+        }
+        
         var out = re.bundle
-            `<input ${attrs} ${bind2(getFormat, setter)} />
-            ${() => out.issues}`;
+            `<input ${attrs} ${bind2(getter, setter)} />
+            <div class="inputError">${() => out.issues}</div>`;
         re(out, 'issues');      // attaching the issues to the bundle so they're available externally
         
         return out;
@@ -80,25 +119,44 @@
         return (obj) => re.bundle
             `<label>
                 <input type="radio" name="radioGroup${counter}" 
-                    ${el => el.checked = obj.value === get()} 
-                    ${re.on.click(ev => ev.target.checked ? set(obj.value) : 0)} />
+                    ${el => el.checked = obj === get()} 
+                    ${re.on.click(ev => ev.target.checked ? set(obj) : 0)} />
                 ${obj.label}
             </label>`;
     };
     radioGroup.counter = 0;
     
-    var data = {
-        text: 'some stuff',
-        num: 77,
-        date: new Date(),
-        check: false,
-        radio: 2
+    var selector = (options, formatter) => (get, set) => {
+        if (!formatter)
+            formatter = v => v;
+        
+        function setValue(el) {
+            var val = el.value;
+            for (var i=0 ; i<options.length ; i++)
+                if (options[i] === val)
+                    return i;
+        }
+        
+        // sets initial value
+        var defaultAttr = op => el => el.selected = op === get();
+        
+        return re.bundle
+            `<select ${re.on.input(ev => set(options[ev.target.value]))} ${setValue}>
+                ${el => options.map((option, i) => re.bundle
+                    `<option value="${i}" id="op${i}" ${defaultAttr(option)}>
+                        ${formatter(option)}
+                    </option>`
+                )}
+            </select>`;
     };
-    re(data, 'text');
-    re(data, 'num');
-    re(data, 'date');
-    re(data, 'check');
-    re(data, 'radio');
+    
+    
+    var labelWrap = (text, content) => re.bundle
+        `<div class="labelWrap">
+            <div class="labelText">${text}</div>
+            ${content}
+        </div>`;
+    
     
     var radioOptions = [
         {value: 1, label: 'one'},
@@ -107,25 +165,55 @@
         {value: 4, label: 'four'}
     ];
     
+    var data = {
+        text: 'some stuff',
+        num: 77,
+        date: new Date(),
+        check: false,
+        dropdown: radioOptions[1],
+        radio: radioOptions[2]
+    };
+    re(data, 'text');
+    re(data, 'num');
+    re(data, 'date');
+    re(data, 'check');
+    re(data, 'dropdown');
+    re(data, 'radio');
+    
     var content = re.bundle
-        `<h3>Text</h3>
-        <div>${() => data.text}</div>
-        ${textInput(() => data.text, val => data.text = val)}
-                
-        <h3>Validated Number</h3>
-        <div>${() => data.num}</div>
-        ${numberInput(() => data.num, val => data.num = val)}
-        
-        <h3>Validated Date</h3>
-        <div>${() => data.date && data.date.toLocaleDateString()}</div>
-        ${dateInput(() => data.date && data.date.toLocaleDateString(), val => data.date = val)}
-        
-        <h3>Checkbox</h3>
-        ${checkInput(() => data.check, val => data.check = val, () => data.check ? "Hey I'm checked!" : "I'm blank...")}
-        
-        <h3>Radio Buttons</h3>
-        <div>${() => data.radio}</div>
-        ${radioOptions.map(radioGroup(() => data.radio, val => data.radio = val))}
+        `<table>
+            <tr>
+                <th>Input</th>
+                <th>Model Value</th>
+            </tr>
+            <tr>
+                <td>${labelWrap('A text field', textInput(() => data.text, val => data.text = val))}</td>
+                <td><p>${() => data.text}</p></td>
+            </tr>
+            <tr>    
+                <td>${labelWrap('Some Number', 
+                    numberInput(() => data.num, val => data.num = val))}</td>
+                <td><p>${() => data.num}</p></td>
+            </tr>
+            <tr>
+                <td>${labelWrap('Test Date',
+                    dateInput(() => data.date && data.date.toLocaleDateString(), val => data.date = val))}</td>
+                <td><p>${() => data.date && data.date.toLocaleDateString()}</p></td>
+            </tr>
+            <tr>
+                <td>${checkInput(() => data.check, val => data.check = val, () => data.check ? "Hey I'm checked!" : "I'm blank...")}</td>
+                <td>${() => data.check}</td>
+            </tr>
+            <tr>
+                <td>${labelWrap('Dropdown Numbers',
+                    selector(radioOptions, op => op.label)(() => data.dropdown, val => data.dropdown = val))}</td>
+                <td><p>${() => data.dropdown.label}</p></td>
+            </tr>
+            <tr>
+                <td>${radioOptions.map(radioGroup(() => data.radio, val => data.radio = val))}</td>
+                <td><p>${() => data.radio.value}</p></td>
+            </tr>
+        </table>
         
         <p>Change the input or click a name to see the greeting change</p>`;
     

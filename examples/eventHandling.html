@@ -24,10 +24,11 @@
     
     // functions added inside an opening tag as below do not render 
     // note: all html elements need to be self-closed or have a closing tag
-    // note: setting input values with   value="{() => data.name}"   does not correctly update if user has modified the input
+    // note: setting input values with   value="{() => data.name}"   does not correctly 
+    //       update if the user has modified the input
     // note: This is a rudimentary method of binding to the input. It has an issue with
     //       moving the cursor to the end of the input on keystroke. It is also rather wordy.
-    //       We will refine this in the componentization example. 
+    //       We will refine this later. 
     
     var content = re.bundle
         `<h3>Hello, ${() => data.name}!</h3>

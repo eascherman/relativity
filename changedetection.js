@@ -48,8 +48,10 @@ var re;
                 return out.value;
             },
             set: function set(value) {
-                out.value = value;
-                invalidate(out);
+                if (out.value !== value) {
+                    out.value = value;
+                    invalidate(out);
+                }
             }
         };
         

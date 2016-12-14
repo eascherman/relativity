@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Types of Content</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+
+    <style>
+        th { text-align: left; }
+        td { padding-right: 20px; }
+    </style>
+
+</head>
+
+<body>
+    <h3>Content Rendering Rules</h3>
+    <ol>
+        <li>Simple values like strings and numbers are rendered directly as text</li>
+        <li>Bundled content (created with re.bundle) is rendered as markup</li>
+        <li>Functions are evaluated with the hosting element passed in as the sole argument.
+            The result is then rendered according to this same rule set.
+            The function will be reevaluated and the content updated if a change 
+            notification is received from something it depends upon.</li>
+        <li>Elements are placed at the location (or moved to it if they were elsewhere)</li>
+        <li>Arrays are rendered as their elements with no delimeter</li>
+        <li>undefined and null are ignored</li>
+        <li>Other types are rendered as a text node of their their toString() output</li>
+     </ol>
+</body>
+
+<script id="example">
+            
+    // string & bundle content
+    re.install(re.bundle `<h3>Scalar</h3>`, document.body);
+    re.install("<p>I might look like html but I'm just a string so I render as text!</p>", document.body);
+    
+    // function content
+    re.install(re.bundle `<h3>Function</h3>`, document.body);
+    re.install(re.bundle `Math.random renders as: ${Math.random}`, document.body);
+    
+    // element content
+    re.install(re.bundle `<h3>Element</h3>`, document.body);
+    var ele = document.createElement('div');
+    ele.innerText = 'This is some text in a code-created div tag';
+    ele.setAttribute('style', 'border: 1px solid black; padding: 4px;');
+    re.install(ele, document.body);
+    
+    // array content
+    re.install(re.bundle `<h3>Array</h3>`, document.body);
+    var content = [1,2,3].map(n => re.bundle 
+        `<span style="background-color: rgb(180, 200, 220); padding: 6px; margin: 4px;">${n}</span>`
+    );
+    re.install(content, document.body);
+    
+    // null, undefined, other objects
+    re.install(re.bundle `<h3>null, undefined, other objects</h3>`, document.body);
+    var content = re.bundle 
+        `<table>
+            <tr>
+                <th>Value</th>
+                <th>Rule</th>
+                <th>Renders As</th>
+            </tr>
+            <tr>
+                <td>null</td>
+                <td>ignored</td>
+                <td>${null}</td>
+            </tr>
+            <tr>
+                <td>undefined</td>
+                <td>ignored</td>
+                <td>${undefined}</td>
+            </tr>
+            <tr>
+                <td>true</td>
+                <td>toString()</td>
+                <td>${true}</td>
+            </tr>
+            <tr>
+                <td>false</td>
+                <td>toString()</td>
+                <td>${false}</td>
+            </tr>
+            <tr>
+                <td>NaN</td>
+                <td>toString()</td>
+                <td>${NaN}</td>
+            </tr>
+            <tr>
+                <td>new Date()</td>
+                <td>toString()</td>
+                <td>${new Date()}</td>
+            </tr>
+        </table>`;
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Mouse Movement</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="../changedetection.js"></script>
+    <script src="../templateengine.js"></script>
+    <script src="../toolkit.js"></script>
+
+    <style>
+        a { 
+            cursor: pointer;
+            display: inline-block;
+            background-color: silver;
+            padding: 6px; 
+        }
+        
+        td { border: none; }
+        
+        .square {
+            background-color: silver;
+            height: 20px;
+            width: 20px;
+            border-radius: 6px;
+        }
+        .x-over {
+            background-color: yellow;
+        }
+        .y-over {
+            background-color: rgb(255, 150, 150);
+        }
+        .x-over.y-over {
+            background-color: orange;
+        }
+    </style>
+
+</head>
+
+<body></body>
+
+<script id="example">
+
+    var rows = [];
+    var cols = [];
+    for (var i=0 ; i<30 ; i++) {
+        var row = {};
+        re(row, 'hovered');
+        rows.push(row);
+        
+        var col = {};
+        re(col, 'hovered');
+        cols.push(col);
+    }
+    
+    // note: this could be designed to prevent unnecessary calculation of unaffected cells
+    var content = re.bundle
+        `<table>
+            ${rows.map(row => re.bundle
+                `<tr>
+                    ${cols.map(col => re.bundle
+                        `<td ${re.on.mouseenter(ev => row.hovered = col.hovered = true)}
+                                ${re.on.mouseleave(ev => row.hovered = col.hovered = false)}>
+                            <div class="square ${[
+                                () => row.hovered ? 'x-over ' : '', 
+                                () => col.hovered ? 'y-over ' : ''
+                            ]}" />
+                         </td>`
+                    )}
+                </tr>`
+            )}
+        </table>
+        <br />
+        <p>Hover over squares to see them react to mouse movement</p>`;
+    
+    re.install(content, document.body);
+    
+</script>
+<script src="../appendExampleCode.js"></script>
+
+</html>
