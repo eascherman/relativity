@@ -35,6 +35,9 @@
         .x-over.y-over {
             background-color: orange;
         }
+	table {
+	    border-spacing: 0;
+	}
     </style>
 
 </head>
@@ -62,7 +65,7 @@
                 `<tr>
                     ${cols.map(col => re.bundle
                         `<td ${re.on.mouseenter(ev => row.hovered = col.hovered = true)}
-                                ${re.on.mouseleave(ev => row.hovered = col.hovered = false)}>
+                             ${re.on.mouseleave(ev => row.hovered = col.hovered = false)}>
                             <div class="square ${[
                                 () => row.hovered ? 'x-over ' : '', 
                                 () => col.hovered ? 'y-over ' : ''
