@@ -58,7 +58,16 @@
 <body></body>
 
     <script>
-
+	try {
+		var check = () => `asdf`;
+		if (check() != 'adsf')
+			throw 'not working';
+	} catch(err) {
+		document.body.appendChild('This demo has not been transpiled, please use a browser that supports arrow functions and template literlas');
+		throw err;
+	}
+	    
+	    
         var examples = {};
         
         examples['Hello, World!'] = 'helloworld';
