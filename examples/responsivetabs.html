@@ -86,7 +86,7 @@
         state.activeTab = defs[0];
         
         return re.bundle
-            `<div style="display: inline-block; margin: 4px; text-align: top;">
+            `<div style="display: inline-block; margin: 4px; vertical-align: top;">
                 <div class="tabStrip">
                     ${defs.map(def => re.bundle
                         `<div class="tabHeader ${() => state.activeTab === def ? 'active' : 'inactive'}" 
