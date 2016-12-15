@@ -673,7 +673,7 @@ function isString(myVar) {
     //////////////////////////////////////////////////
 
     function install(obj, host, before) {
-        if (isString(host))
+        if (typeof host === 'string')
             host = document.getElementById(host);
             
         /*if (before instanceof HtmlLocation)
