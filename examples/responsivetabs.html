@@ -124,8 +124,7 @@
     var content = re.bundle
         `<h3 style="font-size:${() => data.windowWidth / 6}%">Responsive Content</h3>
         <p>Current window width: ${() => data.windowWidth}</p>
-        ${responsiveTabs(tabDefinitions)}
-        <p>Try resizing the window to see how things change</p>`;
+        ${responsiveTabs(tabDefinitions)}`;
         
     re.install(content, document.body);
     
