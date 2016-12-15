@@ -311,7 +311,7 @@
             var closeTag = cursor.collectStaticsThrough(['>'], true);
             var closeTagName = closeTag[0].substring(2, closeTag[0].length - 1); 
             if (closeTagName != tagName)
-                throw Error(`Unexpected closing tag: expecting </${tagName}>, found </${closeTagName}>`);
+                throw Error('Unexpected closing tag: expecting </' + tagName + '>, found </' + closeTagName + '>');
             return function(values) {
                 return new CompiledHtmlElement(tagName, tagAttrs(values), innards(values));
             };
