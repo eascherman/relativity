@@ -59,7 +59,7 @@
 
     <script>
 	try {
-		var check = () => `asdf`;
+		var check = eval('() => `asdf`');
 		if (check() != 'asdf')
 			throw 'not working';
 	} catch(err) {
