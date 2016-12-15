@@ -117,24 +117,25 @@ var re;
     };
     
     
+    if (Object.defineProperty) {
+        re.alerterProperty = function alerterProperty(obj, prop) {
+            var value = obj[prop];
+            var gs = re.getterSetter();
+            gs.set(value);
+            Object.defineProperty(obj, prop, {
+                get: gs.get, 
+                set: gs.set   
+            });
+        };
 
-    re.alerterProperty = function alerterProperty(obj, prop) {
-        var value = obj[prop];
-        var gs = re.getterSetter();
-        gs.set(value);
-        Object.defineProperty(obj, prop, {
-            get: gs.get, 
-            set: gs.set   
-        });
-    };
-    
-    re.relativeProperty = function relativeProperty(obj, prop, getter, setter) {
-        var gs = re.relativeGetterSetter(getter, setter);
-        Object.defineProperty(obj, prop, {
-            get: gs.get,
-            set: gs.set
-        });
-    };
+        re.relativeProperty = function relativeProperty(obj, prop, getter, setter) {
+            var gs = re.relativeGetterSetter(getter, setter);
+            Object.defineProperty(obj, prop, {
+                get: gs.get,
+                set: gs.set
+            });
+        };
+    }
 
 })();
 
