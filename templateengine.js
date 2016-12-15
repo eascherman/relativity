@@ -1,10 +1,5 @@
-
-function isString(myVar) {
-    return (typeof myVar === 'string' || myVar instanceof String);
-}
-        
-        
-(() => {
+     
+(function() {
     var placeholderCounter = 0;
 
     //////////////////////////////////////////////////
@@ -180,7 +175,9 @@ function isString(myVar) {
         if (!(obj instanceof Object)) {
             return obj;
         } else if (obj instanceof Array) {
-            return obj.map(o => this.evaluate(host, o)).join('');
+            return obj.map(function(o) { 
+                return this.evaluate(host, o); 
+            }, this).join('');
         } else if (obj instanceof Bundle) {
             // todo: fill
         } else if (obj instanceof Function) {
@@ -343,7 +340,7 @@ function isString(myVar) {
         var externalEndingDetected = false;
         while (!cursor.isComplete() && !externalEndingDetected) {
             var simpleNodes = cursor.collectStaticsThrough(['</', '<']);       // get any text up until the first open or close tag
-            simpleNodes.forEach(n => nodes.push(n));    // add any plain text to the nodes output
+            simpleNodes.forEach(function(n) { nodes.push(n); });    // add any plain text to the nodes output
             if (simpleNodes.terminator) {
                 if (simpleNodes.terminator.string == '<') {    // internal tag beginning
                     var ele = compileElement(cursor);
@@ -491,14 +488,14 @@ function isString(myVar) {
             this.ele = document.createTextNode(obj);
             this.host.insertBefore(this.ele, this.getElementAfter());
         } else if (obj instanceof Array) {
-            obj.forEach(o => {
+            obj.forEach(function(o) {
                 this.installChild(o, this.host, this.namespace);
-            });
+            }, this);
         } else if (obj instanceof Bundle) {
             var chtml = getCompiledHtmlBundle(obj);
-            chtml.forEach(o => {
+            chtml.forEach(function(o) {
                 this.installChild(o, this.host, this.namespace);
-            });
+            }, this);
         } else if (obj instanceof CompiledHtmlElement) {
             var ns = this.namespace || obj.name === 'svg' ? 'http://www.w3.org/2000/svg' : undefined; 
             if (ns)
@@ -523,8 +520,8 @@ function isString(myVar) {
         } else if (obj instanceof Function) {
             var subLocation = this.createChild(this.host, this.namespace);
             var val;
-            var fUpdate = () => subLocation.install(val);
-            this.updater = re.onChange(() => val = obj(this.host), fUpdate);
+            var fUpdate = function() { return subLocation.install(val); };
+            this.updater = re.onChange(function() { val = obj(this.host); }, fUpdate);
             fUpdate();
         } else {
             this.ele = document.createTextNode(obj.toString());
@@ -540,9 +537,9 @@ function isString(myVar) {
             this.updater.cancel();
             
         // remove any child locations
-        this.forEach(loc => 
-            loc.remove()
-        );
+        this.forEach(function(loc) { 
+            loc.remove();
+        });
         
         // remove element if location is hosting a simple literal
         if (this.ele) {
@@ -579,17 +576,18 @@ function isString(myVar) {
     AttributeLocation2.prototype.install = function(obj) {
         if (obj instanceof Array) {
             var previous;
-            obj.installations = obj.map((item, i) => {
+            obj.installations = obj.map(function(item, i) {
                 var loc = new AttributeLocation2(this.host, previous, this);
                 previous = item;
                 return loc.install(item);
-            });
+            }, this);
         } else if (obj instanceof CompiledHtmlAttribute) {
-            this.updater = re.onChange(() => {
-                var name = obj.getName(this.host);
+            var thiz = this;
+            this.updater = re.onChange(function() {
+                var name = obj.getName(thiz.host);
                 if (name && name.length > 0) {
-                    this.host.setAttribute(name, obj.getValue(this.host));
-                    this.attributeName = name;
+                    thiz.host.setAttribute(name, obj.getValue(thiz.host));
+                    thiz.attributeName = name;
                 }
             });
         } else if (obj instanceof Function) {
@@ -619,29 +617,22 @@ function isString(myVar) {
     AttributeLocation.prototype.createChild = function() {};
     AttributeLocation.prototype.clear = function() {};
     AttributeLocation.prototype.install = function(obj) {
+        var thiz = this;
         if (obj instanceof Array) {
-            obj.forEach(o => {
+            obj.forEach(function(o) {
                 this.install(o);
-            });
+            }, this);
         } else if (obj instanceof Function) {
-            //R(() => obj(this.host));          // todo: add cancellation, this is likely a memory leak
-            this.updater = re.onChange(() => {
-                var val = obj(this.host);
-                this.install(val);
+            // todo: add cancellation, this is likely a memory leak
+            this.updater = re.onChange(function() {
+                var val = obj(thiz.host);
+                thiz.install(val);
             });
-            /*var subLocation = this;
-            var val;
-            var fUpdate = () => 
-                subLocation.install(val);
-            this.updater = re(() => 
-                val = obj(this.host), fUpdate
-            );
-            fUpdate();*/
         } else if (obj instanceof CompiledHtmlAttribute) {
-            this.updater = re.onChange(() => {
-                var name = obj.getName(this.host);
+            this.updater = re.onChange(function() {
+                var name = obj.getName(thiz.host);
                 if (name && name.length > 0) 
-                    this.host.setAttribute(name, obj.getValue(this.host));
+                    thiz.host.setAttribute(name, obj.getValue(thiz.host));
             });
         } 
     };
