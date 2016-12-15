@@ -469,6 +469,7 @@ function isString(myVar) {
         }
         if (this.parent && this.parent.host === this.host)
             return this.parent.getElementAfter();
+        return this.fallbackEnder;
     };
     HtmlLocation.prototype.createChild = function(host, namespace) {
         var loc = new HtmlLocation(this, host, undefined, namespace); 
