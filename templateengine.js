@@ -433,6 +433,11 @@ function isString(myVar) {
         this.host = host;
         this.namespace = namespace;
         this.comesBefore = before;
+        
+        if (!before && !parent) {
+            this.fallbackEnder = document.createComment('html location ender');
+            this.host.appendChild(this.fallbackEnder);
+        }
     }
     HtmlLocation.prototype = Object.create(LinkedTree.prototype);
     HtmlLocation.prototype.getFirstElement = function() {
@@ -552,6 +557,8 @@ function isString(myVar) {
         this.clear();
         LinkedTree.prototype.remove.call(this);
         this.hasBeenRemoved = true;
+        if (this.fallbackEnder)
+            this.host.removeChild(this.fallbackEnder);
     };
     
 
