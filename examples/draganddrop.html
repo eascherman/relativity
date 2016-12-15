@@ -61,7 +61,10 @@
         
         var dndFormatter = lli => bundle
             `<div draggable="true" style="display: inline-block; margin: 5px; background-color: ${randomPastel()}; padding: 6px; cursor: move;"
-                    ${re.on.dragstart(ev => draggedItem = lli)}
+                    ${re.on.dragstart(ev => {
+                        draggedItem = lli;
+                        ev.dataTransfer.setData('text/plain', 'firefox needs this for some reason');
+                    })}
                     ${re.on.drop(ev => {
                         ev.preventDefault();
                         draggedItem = null;
