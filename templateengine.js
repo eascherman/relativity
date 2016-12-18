@@ -118,47 +118,6 @@
             }
             return out;
         };
-        
-        /*this.collectThrough = function(terminators, includeTerminator) {
-            var rs = remainingStrings;
-            if (includeTerminator === undefined)
-                includeTerminator = false;
-            var out = [];
-            if (charCursor == -1)
-                out.push(this.thisItem());
-            var firstTerminator;
-            while (!firstTerminator && stringCursor < b.strings.length) {
-                var ts = thisString();
-                terminators.forEach(function (t) {
-                    var loc = ts.indexOf(t, charCursor);
-                    if (loc > -1 && (!firstTerminator || (firstTerminator && loc < firstTerminator.location)))
-                        firstTerminator = {
-                            location: loc,
-                            string: t
-                        };
-                });
-                if (firstTerminator) {
-                    var finalChar = firstTerminator.location;
-                    if (includeTerminator)
-                        finalChar += firstTerminator.string.length;
-                    var piece = thisString().substring(charCursor, finalChar);
-                    if (piece.length > 0)
-                        out.push(piece);
-                    charCursor = finalChar;
-                    out.terminator = firstTerminator;
-                    return out;
-                } else {
-                    var piece = thisString().substring(charCursor);
-                    if (piece.length > 0)
-                        out.push(piece);
-                    if (stringCursor < b.values.length)
-                        out.push(b.values[stringCursor]);
-                    charCursor = 0;
-                    stringCursor++;
-                }
-            }
-            return out;
-        };*/
     }
 
 
@@ -174,7 +133,7 @@
     CompiledHtmlAttribute.prototype.evaluate = function(host, obj) {
         if (!(obj instanceof Object)) {
             return obj;
-        } else if (obj instanceof Array) {
+        } else if (Array.isArray(obj)) {
             return obj.map(function(o) { 
                 return this.evaluate(host, o); 
             }, this).join('');
@@ -487,7 +446,7 @@
         } else if (!(obj instanceof Object)) {
             this.ele = document.createTextNode(obj);
             this.host.insertBefore(this.ele, this.getElementAfter());
-        } else if (obj instanceof Array) {
+        } else if (Array.isArray(obj)) {
             obj.forEach(function(o) {
                 this.installChild(o, this.host, this.namespace);
             }, this);
@@ -560,51 +519,6 @@
     };
     
 
-    function AttributeLocation2(host, prior, parent) {
-        if (!(host instanceof Element))
-            throw Error('Invalid location host');
-            
-        this.host = host;
-        this.prior = prior;
-        this.parent = parent;
-    }
-    AttributeLocation2.prototype.createChild = function() {
-        if (!this.children)
-            this.children = [];
-        return new AttributeLocation2(this.host, this.children[this.children.length - 1], this);
-    };
-    AttributeLocation2.prototype.install = function(obj) {
-        if (obj instanceof Array) {
-            var previous;
-            obj.installations = obj.map(function(item, i) {
-                var loc = new AttributeLocation2(this.host, previous, this);
-                previous = item;
-                return loc.install(item);
-            }, this);
-        } else if (obj instanceof CompiledHtmlAttribute) {
-            var thiz = this;
-            this.updater = re.onChange(function() {
-                var name = obj.getName(thiz.host);
-                if (name && name.length > 0) {
-                    thiz.host.setAttribute(name, obj.getValue(thiz.host));
-                    thiz.attributeName = name;
-                }
-            });
-        } else if (obj instanceof Function) {
-            var loc = new AttributeLocation2(this.host, null, this);
-            loc.install(obj);
-        }
-    };
-    AttributeLocation2.prototype.getAttributes = function() {
-        var out;
-        if (this.prior)
-            out = this.prior.getAttributes();
-        else
-            out = {};
-            
-        return out;
-    };
-
 
     function AttributeLocation(host, parent, index) {
         if (!(host instanceof Element))
@@ -618,7 +532,7 @@
     AttributeLocation.prototype.clear = function() {};
     AttributeLocation.prototype.install = function(obj) {
         var thiz = this;
-        if (obj instanceof Array) {
+        if (Array.isArray(obj)) {
             obj.forEach(function(o) {
                 this.install(o);
             }, this);
@@ -640,23 +554,6 @@
         if (this.updater)
             this.updater.cancel();
     };
-
-
-    //////////////////////////////////////////////////
-    /////          Install / Remove
-    //////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     //////////////////////////////////////////////////
