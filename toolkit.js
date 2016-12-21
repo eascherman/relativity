@@ -256,3 +256,122 @@ LinkedListItem.prototype.remove = function() {
     
     this.list.triggerOnRemove(this);
 };
+
+
+
+function CallbackManager() {
+    this.callbacks = [];
+};
+CallbackManager.prototype.add = function(func) {
+    var out = {
+        func: func,
+        cancel: function() {
+            out.func = null;
+        }
+    };
+    this.callbacks.push(out);
+    return out;
+};
+CallbackManager.prototype.trigger = function() {
+    //var callbacks = this.callbacks;
+    //this.callbacks = [];
+    var args = arguments;
+    this.callbacks.forEach(function(callback) {
+        try {
+            if (callback.func) 
+                callback.func.apply(undefined, args);
+        } catch (err) {
+            console.log('Error in callback');
+            console.log(err);
+        }
+    });
+};
+
+function SmartArray(arr) {
+    this.values = [].concat(arr || []);
+    Object.defineProperty(this, 'length', {
+        enumerable: false,
+        get: function() {
+            return this.values.length;
+        },
+        set: function(n) {
+            while (n > this.values.length) {
+                this.remove(n);
+                n--;
+            }
+            while (n < this.values.length) {
+                this.push(undefined);
+                n++;
+            }
+        }
+    });
+
+    this.onInserts = new CallbackManager();
+    this.onRemoves = new CallbackManager();
+};
+
+SmartArray.prototype.onInsert = function(func) {
+    this.onInserts.add(func);
+};
+SmartArray.prototype.insert = function(i, value) {
+    this.values.splice(i, 0, value);
+    this.onInserts.trigger(value, i);
+};
+
+SmartArray.prototype.onRemove = function(func) {
+    this.onRemoves.add(func);
+};
+SmartArray.prototype.remove = function(i) {
+    var value = this.values.splice(i, 1);
+    this.onRemoves.trigger(value, i);
+    return value;
+};
+
+SmartArray.prototype.replace = function(i, value) {
+    this.values[i] = value;
+    this.onRemoves.trigger(value, i);
+    this.onInserts.trigger(value, i);
+};
+
+SmartArray.prototype.push = function (value) {
+    this.values.push(value);
+    this.onInserts.trigger(value, this.values.length - 1);
+};
+SmartArray.prototype.pop = function() {
+    return this.remove(this.values.length - 1);
+};
+SmartArray.prototype.shift = function() {
+    return this.remove(0);
+};
+SmartArray.prototype.unshift = function(value) {
+    this.insert(0, value);
+};
+SmartArray.prototype.splice = function(start, deleteCount) {
+    var args = arguments;
+    for (var i=0; i<deleteCount; i++) 
+        this.remove(start);
+    for (var i=2; i<arguments.length; i++) 
+        this.insert(arguments[i]);
+};
+
+SmartArray.prototype.render = function(transform) {
+    var thiz = this;
+    return function(el) {
+        var installations = thiz.values.map(function(value, i) {
+            return re.install(function() {
+                return transform(value);
+            }, el);
+        });
+        thiz.onInsert(function(value, i) {
+            var elementAfter = installations[i-1].getElementAfter();
+            var installation = re.install(function() {
+                return transform(value);
+            }, el, elementAfter);
+            installations.splice(i, 0, installation);
+        });
+        thiz.onRemove(function(value, i) {
+            installations[i].remove();
+            installations.splice(i, 1);
+        });
+    };
+};
