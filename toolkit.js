@@ -24,7 +24,7 @@ re.on = (name, callback) => el => el.addEventListener(name, ev => callback(ev));
         setupProperty(re.on, evName, loadKeyNames);
     });
 
-    var chars;
+    var chars = [];
     var otherKeys;
     function loadKeyNames(evName) {
         if (!chars)
