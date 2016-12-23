@@ -20,9 +20,6 @@ re.on = (name, callback) => el => el.addEventListener(name, ev => callback(ev));
     // keystroke sugar:
     //  re.on.keydown.g(ev => console.log('you pressed g!'));
     //  re.on.keydown.ctrl.s(functionThatSavesMyStuff)(document.body);
-    ['keydown', 'keyup'].forEach(function(evName) {
-        setupProperty(re.on, evName, loadKeyNames);
-    });
 
     var chars = [];
     var otherKeys;
@@ -104,6 +101,10 @@ re.on = (name, callback) => el => el.addEventListener(name, ev => callback(ev));
             });
         }
     }
+    
+    ['keydown', 'keyup'].forEach(function(evName) {
+        setupProperty(re.on, evName, loadKeyNames);
+    });
 
 })();
 
