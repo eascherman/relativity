@@ -113,8 +113,12 @@ function LinkedList(arr) {
     this.onRemoveCallbacks = [];
     re(this, 'first');
     re(this, 'last');
+    
+    var thiz = this;
     if (arr)
-        arr.forEach(item => this.append(item));
+        arr.forEach(forEach(item) {
+            thiz.append(item)
+        });
 }
 LinkedList.prototype.prepend = function(value) {
     var lli = new LinkedListItem(value, this);
