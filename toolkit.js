@@ -116,7 +116,7 @@ function LinkedList(arr) {
     
     var thiz = this;
     if (arr)
-        arr.forEach(forEach(item) {
+        arr.forEach(function(item) {
             thiz.append(item)
         });
 }
