@@ -480,7 +480,8 @@
             var subLocation = this.createChild(this.host, this.namespace);
             var val;
             var fUpdate = function() { return subLocation.install(val); };
-            this.updater = re.onChange(function() { val = obj(this.host); }, fUpdate);
+             var thiz = this;
+            this.updater = re.onChange(function() { val = obj(thiz.host); }, fUpdate);
             fUpdate();
         } else {
             this.ele = document.createTextNode(obj.toString());
