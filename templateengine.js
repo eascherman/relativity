@@ -1,4 +1,4 @@
-     
+   
 (function() {
     var placeholderCounter = 0;
 
@@ -277,6 +277,17 @@
         }
     }
 
+    
+    var charCodes = {};
+    function charFromHtmlCode(code) {
+        if (!charCodes[code]) {
+            var ele = document.createElement('div');
+            ele.innerHTML = code;
+            charCodes[code] = ele.innerText;
+        }
+        return charCodes[code];
+    }
+
     var compiledBundles = { 
         html: {}
     };
@@ -299,7 +310,16 @@
         var externalEndingDetected = false;
         while (!cursor.isComplete() && !externalEndingDetected) {
             var simpleNodes = cursor.collectStaticsThrough(['</', '<']);       // get any text up until the first open or close tag
-            simpleNodes.forEach(function(n) { nodes.push(n); });    // add any plain text to the nodes output
+            simpleNodes.forEach(function(n) {    // add any plain text to the nodes output
+                if (typeof n === 'string') {
+                    var matches = n.match(/&(?:[a-z]+|#\d+);/g);
+                    if (matches)
+                        matches.forEach(function(match) {
+                            n = n.replace(match, charFromHtmlCode(match));
+                        });
+                }
+                nodes.push(n); 
+            }); 
             if (simpleNodes.terminator) {
                 if (simpleNodes.terminator.string == '<') {    // internal tag beginning
                     var ele = compileElement(cursor);
@@ -345,8 +365,8 @@
         
         return lt;
     };
-    LinkedTree.prototype.insert = function() {
-        var lt = new LinkedTree(this.parent);
+    LinkedTree.prototype.insert = function(lt) {
+        lt = lt || new LinkedTree(this.parent);
         lt.itemBefore = this.itemBefore;
         lt.itemAfter = this;
         if (this.itemBefore)
@@ -391,7 +411,7 @@
         this.comesBefore = before;
         
         if (!before && !parent) {
-            this.fallbackEnder = document.createComment('html location ender');
+            this.fallbackEnder = document.createComment('html location ender ' + this.host.nodeName);
             this.host.appendChild(this.fallbackEnder);
         }
     }
@@ -411,21 +431,27 @@
         }
     };
     HtmlLocation.prototype.getElementAfter = function() {
-        if (this.comesBefore)
-            return this.comesBefore;
-        var sibling = this.itemAfter;
-        while (sibling) {
-            if (sibling.host === this.host) {
-                var fe = sibling.getFirstElement();
-                if (fe)
-                    return fe;
-            } else
-                throw Error('unexpected child host - cannot remove if statement');
-            sibling = sibling.itemAfter;
-        }
-        if (this.parent && this.parent.host === this.host)
-            return this.parent.getElementAfter();
-        return this.fallbackEnder;
+        //var ele = (function() {
+            if (this.comesBefore)
+                return this.comesBefore;
+            var sibling = this.itemAfter;
+            while (sibling) {
+                if (sibling.host === this.host) {
+                    var fe = sibling.getFirstElement();
+                    if (fe)
+                        return fe;
+                } else
+                    throw Error('unexpected child host - cannot remove if statement');
+                sibling = sibling.itemAfter;
+            }
+            if (this.parent && this.parent.host === this.host)
+                return this.parent.getElementAfter();
+            return this.fallbackEnder;
+        //}).apply(this);
+        //if (!ele || ele.parentNode != this.host)
+        //    throw new Error('Invalid parent node!');
+        //else
+        //    return ele;
     };
     HtmlLocation.prototype.createChild = function(host, namespace) {
         var loc = new HtmlLocation(this, host, undefined, namespace); 
@@ -434,6 +460,13 @@
     };
     HtmlLocation.prototype.installChild = function(content, host, namespace) {
         var loc = this.createChild(host, namespace);
+        loc.install(content);
+        return loc;
+    };
+    HtmlLocation.prototype.insertContent = function(content) {
+        var ns = this.parent ? this.parent.namespace : undefined;
+        var loc = new HtmlLocation(this.parent, this.host, ns);
+        this.insert(loc);
         loc.install(content);
         return loc;
     };
@@ -480,8 +513,8 @@
             var subLocation = this.createChild(this.host, this.namespace);
             var val;
             var fUpdate = function() { return subLocation.install(val); };
-             var thiz = this;
-            this.updater = re.onChange(function() { val = obj(thiz.host); }, fUpdate);
+            var thiz = this;
+            this.updater = re.onChange(function() { val = obj(thiz.host, thiz); }, fUpdate);
             fUpdate();
         } else {
             this.ele = document.createTextNode(obj.toString());
@@ -575,6 +608,8 @@
     
     
     // attach outputs
+    re.HtmlLocation = HtmlLocation;
+    re.AttributeLocation = AttributeLocation;
     re.bundle = bundle
     re.install = install;
     this.bundle = bundle;
