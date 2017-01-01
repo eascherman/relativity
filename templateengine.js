@@ -501,6 +501,8 @@
             if (obj.contents) {
                 this.installChild(obj.contents, this.ele, ns);
             }
+            if (!this.ele) 
+                throw new Error('Content creation triggered its own removal');
             this.host.insertBefore(this.ele, this.getElementAfter());
         } else if (obj instanceof Element) { 
             var parent = obj.parentElement;
@@ -525,6 +527,10 @@
         this.occupant = obj;
     };
     HtmlLocation.prototype.clear = function() {
+        if (this.hasBeenRemoved)
+            //console.log('already removed');     // todo: really need to remove this
+            throw Error('already removed');
+
         // stop update events from triggering
         if (this.updater)
             this.updater.cancel();
@@ -540,9 +546,6 @@
             this.ele = null;
         } else if (this.installedContent)
             this.clearedAgain = true;
-            
-        if (this.hasBeenRemoved)
-            throw Error('already removed');
     };
     HtmlLocation.prototype.remove = function() {        // removes the location from the dom, along with anything in it
         this.clear();
