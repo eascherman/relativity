@@ -1,4 +1,7 @@
-
+/*
+var listen = (name, callback) => ele => ele.addEventListener(name, ev => callback(ev));
+var bind = (obj, prop) => listen('input', ev => obj[prop] = ev.target.value); 
+*/
 re.on = (name, callback) => el => el.addEventListener(name, ev => callback(ev));
 (function() {
     [   'click', 'dblclick', 'wheel',
@@ -9,11 +12,13 @@ re.on = (name, callback) => el => el.addEventListener(name, ev => callback(ev));
     ].forEach(eventName => re.on[eventName] = callback => re.on(eventName, callback));
 
     re.on.wheel.down = callback => re.on.wheel(function(ev) {
-        if (ev.wheelData < 0)
+        ev.preventDefault();
+        if (ev.wheelDelta < 0)
             callback(ev);
     });
     re.on.wheel.up = callback => re.on.wheel(function(ev) {
-        if (ev.wheelData > 0)
+        ev.preventDefault();
+        if (ev.wheelDelta > 0)
             callback(ev);
     });
 
@@ -21,15 +26,17 @@ re.on = (name, callback) => el => el.addEventListener(name, ev => callback(ev));
     //  re.on.keydown.g(ev => console.log('you pressed g!'));
     //  re.on.keydown.ctrl.s(functionThatSavesMyStuff)(document.body);
 
-    var chars = [];
+    var chars;
     var otherKeys;
     function loadKeyNames(evName) {
-        if (!chars)
+        if (!chars) {
+            chars = [];
             for (var i=0 ; i<230 ; i++) {
                 var char = String.fromCharCode(i);
                 if (char.length != "")
                     chars.push(char);
             }
+        }
         if (!otherKeys)
             otherKeys = {
                 shift:16, ctrl:17, alt:18,
@@ -54,26 +61,26 @@ re.on = (name, callback) => el => el.addEventListener(name, ev => callback(ev));
 
         chars.forEach(function(char) {
             evSetup[char] = callback => evSetup(function(ev) {
-                if (String.fromCharCode(ev.which) === char) {
+                if (String.fromCharCode(ev.which).toLowerCase() === char) {
                     ev.preventDefault();
                     callback(ev); 
                 }
             });
 
             evSetup.ctrl[char] = callback => evSetup(function(ev) {
-                if ((ev.ctrlKey || ev.metaKey) && String.fromCharCode(ev.which) === char) {
+                if ((ev.ctrlKey || ev.metaKey) && String.fromCharCode(ev.which).toLowerCase() === char) {
                     ev.preventDefault();
                     callback(ev); 
                 }
             });
             evSetup.shift[char] = callback => evSetup(function(ev) {
-                if (ev.shiftKey && String.fromCharCode(ev.which) === char) {
+                if (ev.shiftKey && String.fromCharCode(ev.which).toLowerCase() === char) {
                     ev.preventDefault();
                     callback(ev); 
                 }
             });
             evSetup.alt[char] = callback => evSetup(function(ev) {
-                if (ev.altKey && String.fromCharCode(ev.which) === char) {
+                if (ev.altKey && String.fromCharCode(ev.which).toLowerCase() === char) {
                     ev.preventDefault();
                     callback(ev); 
                 }
@@ -83,7 +90,7 @@ re.on = (name, callback) => el => el.addEventListener(name, ev => callback(ev));
     
     // performs an action once when a property is first used via a getter and then removes function based property
     function setupProperty(obj, prop, loader) {
-        if (true)   //(!Object.defineProperty)   property method currently disabled
+        if (true) // (!Object.defineProperty)
             loader(prop);
         else {
             var holder = obj[prop];
@@ -106,6 +113,154 @@ re.on = (name, callback) => el => el.addEventListener(name, ev => callback(ev));
         setupProperty(re.on, evName, loadKeyNames);
     });
 
+
+})();
+
+/*
+function input(func) {
+    return listen('input', ev => func(ev.target.value, ev));
+}
+
+// establishes two way binding to the input element
+// usage1: an object as arg1 and the name of a property in it as arg2
+// usage2: a value getter as arg1 and a value setter as arg2
+function bind2(arg1, arg2) {
+    var bound = false;
+    
+    if (arg1 instanceof Function) {
+        var get = arg1;
+        var set = arg2;
+        return function(ele) {
+            if (document.activeElement != ele)
+                ele.value = get();
+            if (!bound)
+                return input(val => set(val));
+        }
+    } else {
+        var obj = arg1;
+        var prop = arg2;
+        return function(ele) {  
+            if (document.activeElement != ele)
+                ele.value = obj[prop];
+            if (!bound)
+                return input(val => obj[prop] = val);
+        }
+    }
+}
+
+
+var textInput = (arg1, arg2) => bundle
+    `<input type="text" ${bind2(arg1, arg2)} />`;      
+
+var numberInput = (arg1, arg2) => {
+    var get, set;
+    if (arg1 instanceof Function) {
+        get = arg1;
+        set = val => {
+            var num = Number(val);
+            if (!isNaN(num) && val != '')
+                set(num);
+        };
+    } else {
+        get = () => arg1[arg2];
+        set = val => {
+            var num = Number(val);
+            if (!isNaN(num) && val != '')
+                arg1[arg2] = num;
+        };
+    }
+    
+    return bundle
+        `<input type="number" ${bind2(get, set)} />`;
+};
+*/
+
+
+/////////////////////////////////////////////
+/////               Router
+/////////////////////////////////////////////
+
+/*
+function getHashRouter() {
+    var hrefHolder = {};
+    re(hrefHolder, 'href');
+    hrefHolder.href = window.location.href;
+    // todo: add location push state event handling
+    
+    var route = [];
+    re(route, 'href', 
+        () => hrefHolder.href,
+        val => {
+            window.location.href = val;
+            hrefHolder.href = val;
+        }
+    );
+    
+    re(route, 'document', 
+        () => 
+            route.href.split('#')[0], 
+        val => 
+            route.href = val + (route.hash ? '#' + route.hash : '')
+    );
+    re(route, 'hash', 
+        () => 
+            route.href.split('#')[1], 
+        val => 
+            route.href = route.document + (val ? '#' + val : '')
+    );
+    re(route, 'querystring', 
+        () => 
+            !route.hash ? undefined : route.hash.split('?')[1], 
+        val => 
+            route.hash = route.path + (val ? '?' + val : '')
+    );
+    re(route, 'path', 
+        () => 
+            !route.hash ? undefined : route.hash.split('?')[0], 
+        val => 
+            route.hash = val + (route.querystring ? '?' + route.querystring : '')
+    );
+        
+    return route;
+}
+
+*/
+
+(function() {
+    var hashRouter;
+
+    re.getHashRouter = function getHashRouter() {
+        if (!hashRouter) {
+            hashRouter = {};
+            var gsLoc = re(hashRouter, 'location', function() {
+                return window.location;
+            });
+
+            ['hash', 'search', 'pathname'].map(function(prop) {
+                return re(hashRouter, prop, function get() {
+                    return hashRouter.location[prop];
+                }, function set(value) {
+                    hashRouter.location[prop] = value;
+                });
+            });
+
+            var ops = window.onpopstate;
+            window.onpopstate = function(ev) {
+                re.invalidate(gsLoc);
+                if (ops)
+                    ops(ev);
+            };
+
+            var priorLoc;
+            setInterval(function() {
+                var loc = window.location.toString();
+                if (priorLoc !== loc)
+                    re.invalidate(gsLoc);
+                priorLoc = loc;
+            }, 500);
+        }
+        return hashRouter;
+    };
 })();
 
 
@@ -114,12 +269,8 @@ function LinkedList(arr) {
     this.onRemoveCallbacks = [];
     re(this, 'first');
     re(this, 'last');
-    
-    var thiz = this;
     if (arr)
-        arr.forEach(function(item) {
-            thiz.append(item)
-        });
+        arr.forEach(item => this.append(item));
 }
 LinkedList.prototype.prepend = function(value) {
     var lli = new LinkedListItem(value, this);
@@ -244,70 +395,113 @@ LinkedListItem.prototype.remove = function() {
     this.list.triggerOnRemove(this);
 };
 
-re.mapRender = function map(arrGetter, transform, remover) {
-    if (!remover)
-        remover = function(installation) {
-            installation.remove();
+re.mapInstall = function(arr, transform) {
+    var changeTrigger = re();
+
+    var changes = [];
+    if (!arr._reMapNotifiers) {
+
+        var push = arr.push;
+        arr.push = function(val) {
+            push.call(arr, val);
+            changes.push(function(el, parentLocation) {
+                var cont = transform(val, function getPos() {
+                    for (var i=0; i<arr.length; i++)
+                        if (val === arr[i])
+                            return i;
+                }, arr);
+                var inst = parentLocation.installChild(cont, el);
+                installations.push(inst);
+            });
+            re.invalidate(changeTrigger);
         };
 
+        var pop = arr.pop;
+        arr.pop = function() {
+            pop.apply(arr);
+            changes.push(function(el) {
+                var inst = installations.pop();
+                inst.remove();
+            });
+            re.invalidate(changeTrigger);
+        };
+
+        var shift = arr.shift;
+        arr.shift = function() {
+            shift.apply(arr);
+            changes.push(function(el) {
+                var inst = installations.shift();
+                inst.remove();
+            });
+            re.invalidate(changeTrigger);
+        };
+
+        var unshift = arr.unshift;
+        arr.unshift = function(val) {
+            unshift.call(arr, val);
+            changes.unshift(function(el, parentLocation) {
+                var cont = transform(val, function getPos() {
+                    for (var i=0; i<arr.length; i++)
+                        if (val === arr[i])
+                            return i;
+                }, arr);
+                var inst = parentLocation.installChild(cont, el);
+                installations.unshift(inst);
+            });
+            re.invalidate(changeTrigger);
+        };
+
+        var splice = arr.splice;
+        arr.splice = function(pos, deleteCount) {
+            var priorInst = installations[pos];
+            splice.apply(arr, arguments);
+            var args = arguments;
+            changes.push(function(el) {
+                var instSpliceArgs = [pos, deleteCount];
+                for (var i=2; i<args.length; i++) {
+                    var val = args[i];
+                    var cont = transform(val, function getPos() {
+                        for (var i=0; i<arr.length; i++)
+                            if (val === arr[i])
+                                return i;
+                    }, arr);
+                    var inst = priorInst.insertContent(cont);
+                    priorInst = inst;
+                    instSpliceArgs.push(inst);
+                }
+                var deletedInsts = installations.splice.apply(installations, instSpliceArgs);
+                deletedInsts.forEach(function(inst) {
+                    inst.remove();
+                });
+            });
+            re.invalidate(changeTrigger);
+        };
+
+        // todo: sort, reverse
+    }
+
     var installations = [];
-    var result = [];
-    var priorArr = [];
-
+    var initialized = false;
     return function(el, parentLocation) {
-        var arr = arrGetter();
-        re(arr).get();              // ensure changes to the array are triggered for this function
-        var i = 0;
-        var j = 0;
+        if (!initialized) {
+            initialized = true;
 
-        while (i < arr.length && j < priorArr.length) {     // todo: handle scenarios where more than one is removed/inserted at once
-            if (arr[i] === priorArr[j]) {       // match
-                i++, j++;
-            } else if (arr[i+1] === priorArr[j]) {        // one inserted
-                var val = arr[i];
-                var content = transform(val);
-
-                var followingInstallation = installations[j];
-                var elementAfter = followingInstallation.getFirstElement();
-                var installation;
-                if (followingInstallation)
-                    installation = followingInstallation.insertContent(content);
-                else
-                    installation = parentLocation.installChild(content, el);
-
-                installations.splice(j, 0, installation);
-                result.splice(j, 0, content);
-                i++;
-            } else if (arr[i] === priorArr[j+1]) {        // one removed
-                var inst = installations.splice(i, 1)[0];
-                remover(inst);
-                result.splice(i, 1);
-                j++;
-            } else {           // not sure what it is, remove it
-                var inst = installations.splice(i, 1)[0];
-                remover(inst);
-                result.splice(i, 1); 
-                j++;
-            }
+            arr.forEach(function(val) {
+                var cont = transform(val, function getPos() {
+                    for (var i=0; i<arr.length; i++)
+                        if (val === arr[i])
+                            return i;
+                }, arr);
+                var inst = parentLocation.installChild(cont, el);
+                installations.push(inst);
+            }, arr);
         }
 
-        if (j < priorArr.length) {      // get rid of final entries no longer present
-            while (j < result.length) {
-                var inst = installations.splice(i, 1)[0];
-                remover(inst);
-                result.splice(i, 1);
-            }
-        } else {                        // add new final entries 
-            while (i < arr.length) {
-                var content = transform(arr[i]);
-
-                var installation = parentLocation.installChild(content, el);
-                installations.push(installation);
-                result.push(content);
-                i++;
-            }
-        } 
-
-        priorArr = arr.concat([]);
+        changeTrigger.get();
+        var pendingChanges = changes;
+        changes = [];
+        pendingChanges.forEach(function(change) {
+            change(el, parentLocation);
+        })
     };
 };
