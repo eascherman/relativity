@@ -1,15 +1,19 @@
 
-var re;
+var re = (function() {
+    var re;     // just in case someone plays with global defs or needs to change name
 
-(function() {
-    
     re = function re(arg1, arg2, arg3, arg4) {
         if (arg1 === undefined)
             return re.getterSetter();
         else if (typeof arg2 === 'string') {
-            if (arg3)
-                return re.relativeProperty(arg1, arg2, arg3, arg4);
-            else
+            if (!Object.defineProperty)
+                throw new Error('Object.defineProperty is not supported');
+            if (arg3) {
+                if (Array.isArray(arg3))
+                    return re.arrayProperty(arg1, arg2, arg3);
+                else
+                    return re.relativeProperty(arg1, arg2, arg3, arg4);
+            } else
                 return re.alerterProperty(arg1, arg2);
         } else if (arg1 instanceof Function)
             return re.relativeGetterSetter(arg1, arg2);
@@ -34,28 +38,65 @@ var re;
                 obj.onInvalidate();
         }
     }
+    re.invalidate = invalidate;
     
     var currentDependent;
     var onInvalidateQueue = [];
 
-    re.getterSetter = function relativeGetterSetter() {
+    // a getterSetter that detects array changes
+    re.getterSetter = function getterSetter() {
         var out = {
             id: newId(),
             dependents: {},
             get: function get() {
                 if (currentDependent)
                     out.dependents[currentDependent.id] = currentDependent;
+
                 return out.value;
             },
             set: function set(value) {
                 if (out.value !== value) {
+                    if (Array.isArray(value))
+                        re.arrayFuncNotifiers(value);
                     out.value = value;
                     invalidate(out);
-                }
+                } 
             }
         };
         
         return out;
+    };
+
+    re.arrayGetterSetter = function arrayGetterSetter(arr) {
+        if (!arr._reProxy) {     // proxy array modifiers so changes can be noted
+            arr._reProxy =  re.getterSetter();  
+            arr._reProxy.value = arr;
+
+            arr.getValueLocation = function getValueLocation(value) {
+                for (var i=0; i<arr.length; i++) 
+                    if (arr[i] === value)
+                        return i;
+                throw new Error('Position value not found in array');
+            };
+
+            arr.insertBeforeValue = function insertBeforeValue(item, positionValue) {
+                return arr.splice(arr.getValueLocation(positionValue), 0, item);
+            };
+
+            arr.removeValue = function removeValue(item) {
+                return arr.splice(arr.getValueLocation(item), 1);
+            };
+
+            ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']
+                .forEach(function(method) {
+                    var func = arr[method];
+                    arr[method] = function() {
+                        func.apply(this, arguments);
+                        invalidate(arr._reProxy);
+                    };
+                });
+        }
+        return arr._reProxy;
     };
 
     re.relativeGetterSetter = function relativeGetterSetter(getter, setter) {
@@ -76,7 +117,7 @@ var re;
                     }
                     currentDependent = oldDependent;   
                 }
-                // if this is the root call, process any outstanding onInvalidte callbacks
+                // if this is the root call, process any outstanding onInvalidate callbacks
                 if (!currentDependent) {
                     var queue = onInvalidateQueue;
                     onInvalidateQueue = [];
@@ -115,9 +156,26 @@ var re;
             }
         };   
     };
-    
+
+
+    re.arrayFuncNotifiers = function arrayFuncNotifiers(arr) {
+        if (!arr._funcNotifiers) {
+            arr._funcNotifiers = re.arrayGetterSetter(arr);
+
+            ['reduce', 'forEach', 'map', 'filter']
+                .forEach(function(fName) {
+                    var func = arr[fName];
+                    arr[fName] = function() {
+                        arr._funcNotifiers.get();
+                        return func.apply(arr, arguments);
+                    };
+                });
+        }
+    };
+  
     
     if (Object.defineProperty) {
+
         re.alerterProperty = function alerterProperty(obj, prop) {
             var value = obj[prop];
             var gs = re.getterSetter();
@@ -126,17 +184,20 @@ var re;
                 get: gs.get, 
                 set: gs.set   
             });
+            return gs;
         };
-
+        
         re.relativeProperty = function relativeProperty(obj, prop, getter, setter) {
             var gs = re.relativeGetterSetter(getter, setter);
             Object.defineProperty(obj, prop, {
                 get: gs.get,
                 set: gs.set
             });
+            return gs;
         };
     }
 
+    return re;
 })();
 
 if (this)
