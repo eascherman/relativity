@@ -416,6 +416,8 @@ LinkedListItem.prototype.remove = function() {
 
         return function(el, loc) {
             if (!initialized) {
+                initialized = true;
+                
                 arr.onRemove(function(pos) {
                     var inst = installations[pos];
                     inst.remove();
