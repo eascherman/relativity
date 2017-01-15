@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Event Handling</title>
+    
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+
+    <script src="changedetection.js"></script>
+    <script src="templateengine.js"></script>
+    <script src="toolkit.js"></script>
+
+    <style>
+        a { 
+            cursor: pointer;
+        }
+        .main-selector > a {
+            display: inline-block;
+            background-color: silver;
+            padding: 6px; 
+        }
+
+        header > nav > a {
+            margin-left: 10px;
+            margin-right: 10px;
+            color: white;
+            text-shadow:  1px 1px 2px black;
+            font-size: large;
+            padding-bottom: 3px;
+        }
+        header > nav > a.selected {
+            border-bottom: 3px solid white
+        }
+        header > nav {
+            padding-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 300%;
+        }
+
+        body {
+            background-color: #c19222;  /*rgb(200,240,200);*/
+            background: radial-gradient(#e8c063, #e8c063,  #c19222);
+            padding: 0;
+            margin: 0;
+        }
+
+        header {
+            text-align: center;
+        }
+
+        main > div {
+            background-color: white;
+            padding: 20px;
+            padding-left: 40px;
+            padding-right: 40px;
+            margin-left: -10px;
+            margin-right: -10px;
+            box-shadow: 0 0 6px black inset;
+        }
+        main {
+            overflow: hidden;
+        }
+
+        button {
+            border: none;
+            background: rgb(100,150,255);
+            padding: 8px;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        button:hover {
+            background: rgb(150,200,255);
+        }
+
+        .footer-links {
+            display: inline-block;
+            padding: 10px;
+            text-align: left;
+        }
+        .footer-links > h5 {
+            color: rgb(230,230,230);
+        }
+        .footer-links > a {
+            padding: 2px;
+            padding-left: 8px;
+            display: block;
+            text-decoration: none;
+            color: white;
+        }
+        footer { 
+            text-align: center;
+            padding-bottom: 15px;
+        }
+
+    </style>
+
+</head>
+
+<body></body>
+
+<script>
+</script> 
+
+<script id="example">
+
+    var data = {};
+    re(data, 'selected');     // if the data.people array changes we want change notifications to trigger
+    re(data, 'date');
+
+    var button = (text, onClick) => re.bundle
+        `<button ${re.on.click(onClick)}>${text}</button>`;
+
+    // http://embed.plnkr.co/TQoIJ2/?show=preview
+    var plunkerCode = (url, height, width) => re.bundle
+        `<iframe src="${url}" frameborder="0" width="${width}" height="${height}"></iframe>`;
+
+    function gist(url) {
+        var el = document.createElement('div');       // http://stackoverflow.com/questions/9154026/jquery-dynamically-load-a-gist-embed
+        var callbackName = "gist_callback";
+        window[callbackName] = function (gistData) {
+            delete window[callbackName];
+            var html = '<link rel="stylesheet" href="' + gistData.stylesheet + '"></link>';
+            html += gistData.div;
+            el.innerHTML = html;
+            script.parentNode.removeChild(script);
+        };
+        var script = document.createElement("script");
+        script.setAttribute("src", url + ".json?callback=" + callbackName);
+        document.body.appendChild(script);
+        return el;
+    };
+
+    function testFunc() {
+        return re.bundle
+            `<div class="footer-links">
+                <h5>${title}</h5>
+                ${Object.keys(links).map(key => (re.bundle
+                    `<a href="${links[key]}">${key}</a>`,'')
+                )}
+            </div>`;
+    }
+
+    var sections = {
+        about: 'this is an about section',
+        basic: 'this is a basics section',
+        components: re.bundle
+            `<pre><code>${testFunc.toString()}</code></pre>
+            ${gist('https://gist.github.com/eascherman/72ae3d1b8d4d33835bff59be7ca225b5')}
+            `,
+        setup: re.bundle
+            `<div>
+                this is stuff about setting up your project asdlfijbnasldfiuabfd 
+                ${Math.random()}
+                asdfjn aslidfjubna adujsalsf basldfib asildf basf sadb
+                ${button('this is a button', () => alert('hello there!'))}
+            </div>`
+    };
+
+    data.selected = sections.about;
+
+    var mainSelector = (selection, name) => re.bundle
+        `<a class="${() => data.selected === selection ? 'selected' : ''}"
+                ${re.on.click(() => data.selected = selection)}>
+            ${name}
+        </a>`;
+
+    var footerSection = (title, links) => re.bundle
+        `<div class="footer-links">
+            <h5>${title}</h5>
+            ${Object.keys(links).map(key => (re.bundle
+                `<a href="${links[key]}">${key}</a>`,'')
+            )}
+        </div>`;
+
+    var content = re.bundle
+        `<header>
+            <div style="font-size: 500%; padding:50px; font-family: courier; padding-bottom:0;">
+                Relativity-js
+            </div>
+            <nav>
+                ${mainSelector(sections.about, 'About')}
+                ${mainSelector(sections.basic, 'Basics')}
+                ${mainSelector(sections.components, 'Building Blocks')}
+                ${mainSelector('', 'Deeper')}
+                ${mainSelector(sections.setup, 'Setup')}
+            </nav>
+        </header>
+        
+        <main><div>${() => data.selected}</div></main>
+
+        <footer>
+            ${footerSection('Some Links', {
+                'link 1':'#', 
+                'link 2':'#', 
+                'link 3':'#', 
+                'link 4':'#'
+            })}
+            ${footerSection('More Links', {
+                'link 1':'#', 
+                'link 2':'#', 
+                'link 3':'#', 
+                'link 4':'#'
+            })}
+            ${footerSection('Other Links', {
+                'link 1':'#', 
+                'link 2':'#', 
+                'link 3':'#', 
+                'link 4':'#'
+            })}
+        </footer>`;
+    
+    re.install(content, document.body);
+</script>
+
+</html>
