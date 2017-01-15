@@ -7,6 +7,8 @@
     //////////////////////////////////////////////////
 
     function Bundle(strings, values) {
+        if (!(strings instanceof Array))
+            throw Error('Invalid bundle call');
         this.strings = strings;
         this.values = values;
     }
