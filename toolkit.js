@@ -317,5 +317,6 @@ re.on = function(name, callback) {
     re.mapInstall = function(arr, transform) {
         return re.arrInstall(re.bindMap(arr, transform));
     };
+    re.for = re.mapInstall;
 
 })();
